@@ -1,9 +1,10 @@
 #include "esp_log.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
-#include <stdio.h>
 #include "relays.h"
 #include "server.c"
+#include "mdns.c"
+#include <stdio.h>
 
 void app_main(void) {
   ESP_LOGI(TAG, "Starting relay controller");
@@ -26,4 +27,5 @@ void app_main(void) {
 
   // Start web server task
   xTaskCreate(relay_server_task, "http_server", 4096, NULL, 5, NULL);
+  xTaskCreate(mdns_task, "mdns_task", 2048, NULL, 5, NULL);
 }

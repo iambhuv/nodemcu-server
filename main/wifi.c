@@ -3,8 +3,8 @@
 #include "freertos/event_groups.h"
 #include "config.h"
 
-#define WIFI_CONNECTED_BIT BIT0
 
+#define WIFI_CONNECTED_BIT BIT0
 static EventGroupHandle_t s_wifi_event_group;
 
 // WiFi event handler

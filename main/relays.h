@@ -29,7 +29,7 @@ void relays_init(void) {
 
 // Control by relay number (1-4)
 void relay_set(uint8_t relay_num, uint8_t state) {
-  if (relay_num < 0 || relay_num > NUM_RELAYS) {
+  if (relay_num > NUM_RELAYS) {
     ESP_LOGE(TAG, "Invalid relay number: %d", relay_num);
     return;
   }

@@ -1,9 +1,17 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "mdns.h"
 #include <stdint.h>
 
-static const char *TAG = "main";
+static const char *TAG = "switch-1";
+
+static const mdns_txt_item_t mdns_txt[] = {
+    { "type",   "switch" },
+    { "relays", "4" },
+    { "proto",  "v1" },
+    { "fw",     "1.0.0" },
+};
 
 /**
  * Enter your local wifi ssid and password
@@ -12,7 +20,7 @@ static const char *TAG = "main";
 #define WIFI_SSID ""
 #define WIFI_PASS ""
 
-/**
+/*
  * Port on which TCP server will run
  */
 #define RELAY_PORT 3736
