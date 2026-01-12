@@ -1,9 +1,9 @@
 #include "esp_log.h"
 #include "freertos/task.h"
+#include "mdns.c"
 #include "nvs_flash.h"
 #include "relays.h"
 #include "server.c"
-#include "mdns.c"
 #include <stdio.h>
 
 void app_main(void) {
@@ -13,8 +13,7 @@ void app_main(void) {
 
   relays_init();
 
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
-      ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
     ESP_ERROR_CHECK(nvs_flash_erase());
     ret = nvs_flash_init();
   }

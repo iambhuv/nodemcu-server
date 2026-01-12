@@ -4,13 +4,13 @@
 #include "mdns.h"
 #include <stdint.h>
 
-static const char *TAG = "switch-1";
+static const char* TAG = "switch-1";
 
 static const mdns_txt_item_t mdns_txt[] = {
-    { "type",   "switch" },
-    { "relays", "4" },
-    { "proto",  "v1" },
-    { "fw",     "1.0.0" },
+    {"type", "switch"},
+    {"relays", "4"},
+    {"proto", "v1"},
+    {"fw", "1.0.0"},
 };
 
 /**
@@ -29,7 +29,7 @@ static const mdns_txt_item_t mdns_txt[] = {
  * GPIO pin number for relays in order
  *
  * Data Pin to GPIO Map (for ESP8266)
- * 
+ *
  * - D0 -> 16
  * - D1 ->  5
  * - D2 ->  4

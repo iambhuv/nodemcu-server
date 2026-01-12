@@ -7,11 +7,11 @@
 
 void relays_init(void) {
   gpio_config_t io_conf = {
-    .pin_bit_mask = 0,
-    .mode = GPIO_MODE_OUTPUT,
-    .pull_up_en = GPIO_PULLUP_DISABLE,
-    .pull_down_en = GPIO_PULLDOWN_DISABLE,
-    .intr_type = GPIO_INTR_DISABLE
+      .pin_bit_mask = 0,
+      .mode = GPIO_MODE_OUTPUT,
+      .pull_up_en = GPIO_PULLUP_DISABLE,
+      .pull_down_en = GPIO_PULLDOWN_DISABLE,
+      .intr_type = GPIO_INTR_DISABLE,
   };
 
   // Build the pin mask
@@ -36,7 +36,7 @@ void relay_set(uint8_t relay_num, uint8_t state) {
 
   uint8_t pin = relays[relay_num];
   gpio_set_level(pin, state);
-  
+
   ESP_LOGI(TAG, "Relay %d (GPIO %d) -> %s", relay_num, pin, state ? "ON" : "OFF");
 }
 
