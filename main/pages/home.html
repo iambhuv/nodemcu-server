@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><head><title>ESP8266</title></head>
+<body>
+<h1>ESP8266 Web Server</h1>
+<h2>Press to Toggle Relays</h2>
+<button id=0>Yellow</button>
+<button id=1>Blue</button>
+<button id=2>Green</button>
+<button id=3>White</button>
+<script>
+document.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => fetch(`/rel/${btn.id}`, { method: 'POST' })))
+</script>
+</body>
+</html>

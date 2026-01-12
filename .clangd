@@ -1,0 +1,19 @@
+CompileFlags:
+  Remove: 
+    - -mlongcalls
+    - -fstrict-volatile-bitfields
+    - -Werror=all
+    - -Wno-error=*
+    - -ffunction-sections
+    - -fdata-sections
+    - -Wno-frame-address
+    - -nostdlib
+    - -Wlogical-op
+    - -Wno-old-style-declaration
+  Add:
+    - -Wno-unknown-warning-option
+
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Remove: '*'
