@@ -22,8 +22,8 @@ static const mdns_txt_item_t mdns_txt[] = {
  * Enter your local wifi ssid and password
  * More advanced pairing system will be added later
  */
-#define WIFI_SSID "Coding Wala 4G"
-#define WIFI_PASS "Coding@2022"
+#define WIFI_SSID ""
+#define WIFI_PASS ""
 
 /*
  * Port on which TCP server will run
@@ -54,19 +54,32 @@ static const uint8_t relays[] = {4, 14, 12, 13};
 #define NUM_RELAYS (sizeof(relays) / sizeof(relays[0]))
 
 /**
+ * Pairing Button Configuration
+ * 
+ * Touch these two wires/pins together to enter pairing mode
+ * One pin will be set as INPUT_PULLUP, the other as OUTPUT LOW
+ * When they touch, it triggers pairing mode
+ */
+#define PAIRING_PIN_INPUT  0   // GPIO0 (D3) - with pullup
+#define PAIRING_PIN_OUTPUT 16  // GPIO16 (D0) - set to LOW
+
+/**
  * RF433 Remote Configuration (EV1527 Protocol)
  * 
- * Each button on your remote sends a unique 24-bit code.
- * To configure, press each button and copy the sequence from logs.
+ * Only supports remotes with shared address (proper EV1527 implementation)
+ * Remote address is learned via pairing mode and stored in NVS
  * 
- * Format: "s<20 address bits><4 data bits>"
+ * To pair a new remote:
+ * 1. Touch pairing wires together (LED will blink fast)
+ * 2. Press any button on remote within 30 seconds
+ * 3. Remote is now paired (LED goes solid)
  * 
- * Set to NULL to disable a button.
+ * Button data bits expected:
+ * A = 1000 (0x8)
+ * B = 0100 (0x4)
+ * C = 0010 (0x2)
+ * D = 0001 (0x1)
  */
-#define RF_BUTTON_A "s010101010101010100001100"  // Button A -> Relay 1
-#define RF_BUTTON_B "s010101010101010100000011"  // Button B -> Relay 2
-#define RF_BUTTON_C "s010101010101010111000000"  // Button C -> Relay 3
-#define RF_BUTTON_D "s010101010101010100110000"  // Button D -> Relay 4
 
 /**
  * RF Hold Detection

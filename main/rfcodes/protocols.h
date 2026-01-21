@@ -15,6 +15,7 @@
 /**
  * Definition of the "older" intertechno protocol with fixed 12 bits of data
  */
+__attribute__((unused))
 static signal_protocol_t protocol_it1 = {.name = "it1",
                                          .min_code_len = 1 + 12,
                                          .max_code_len = 1 + 12,
@@ -31,6 +32,7 @@ static signal_protocol_t protocol_it1 = {.name = "it1",
 /**
  * Definition of the "newer" intertechno protocol with 32 - 46 data bits
  */
+__attribute__((unused))
 static signal_protocol_t protocol_it2 = {.name = "it2",
                                          .min_code_len = 34,
                                          .max_code_len = 48,
@@ -49,6 +51,7 @@ static signal_protocol_t protocol_it2 = {.name = "it2",
 /**
  * Definition of the protocol from SC5272 and similar chips with 12 data bits
  */
+__attribute__((unused))
 static signal_protocol_t protocol_sc5 = {.name = "sc5",
                                          .min_code_len = 1 + 12,
                                          .max_code_len = 1 + 12,

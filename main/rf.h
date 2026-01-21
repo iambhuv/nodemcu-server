@@ -1,6 +1,6 @@
 /**
  * @file rf.h
- * @brief RF 433MHz Receiver using RFCodes library
+ * @brief RF 433MHz Receiver with pairing support
  * 
  * Based on RFCodes by Matthias Hertel (BSD 3-Clause License)
  * https://github.com/mathertel/RFCodes
@@ -15,6 +15,8 @@
 #include "freertos/task.h"
 #include "rfcodes/rfcodes.h"
 #include "relays.h"
+#include "pairing.h"
+#include "status_led.h"
 
 #define RF_TAG "RF433"
 
@@ -33,6 +35,31 @@ static uint32_t last_rf_time = 0;
 
 // Per-button hold detection - tracks last toggle time for each relay
 static uint32_t last_toggle_time[4] = {0, 0, 0, 0};
+
+/**
+ * @brief Extract address from EV1527 sequence
+ * @param sequence Full sequence (s + 20 address + 4 data)
+ * @param address Output buffer for address (must be 21 bytes)
+ * @param data Output for 4-bit data value
+ * @return true if valid EV1527 sequence
+ */
+static bool rf_parse_ev1527(const char *sequence, char *address, uint8_t *data) {
+    if (strlen(sequence) != 25 || sequence[0] != 's') {
+        return false;
+    }
+    
+    // Extract address (20 bits)
+    strncpy(address, sequence + 1, 20);
+    address[20] = '\0';
+    
+    // Extract and convert data (4 bits)
+    *data = 0;
+    for (int i = 0; i < 4; i++) {
+        *data = (*data << 1) | (sequence[21 + i] == '1' ? 1 : 0);
+    }
+    
+    return true;
+}
 
 /**
  * @brief Callback function called when a valid RF code is received
@@ -69,71 +96,98 @@ static void rf_code_received_callback(const char *code) {
     
     ESP_LOGI(RF_TAG, "Protocol: %s, Sequence: %s", protocol, sequence);
     
-    // Handle EV1527 protocol for relay control
-    if (strcmp(protocol, "ev1527") == 0) {
-        // Match against configured button codes
-        int relay_num = -1;
-        const char *button_name = NULL;
-        
-        #ifdef RF_BUTTON_A
-        if (strcmp(sequence, RF_BUTTON_A) == 0) {
+    // Only handle EV1527 protocol
+    if (strcmp(protocol, "ev1527") != 0) {
+        return;
+    }
+    
+    // Parse EV1527 sequence
+    char address[21];
+    uint8_t data;
+    if (!rf_parse_ev1527(sequence, address, &data)) {
+        ESP_LOGW(RF_TAG, "Invalid EV1527 sequence");
+        return;
+    }
+    
+    ESP_LOGD(RF_TAG, "Address: %s, Data: 0x%X", address, data);
+    
+    // Check if in pairing mode
+    if (pairing_is_active()) {
+        ESP_LOGI(RF_TAG, "Pairing mode: Learning address %s", address);
+        if (pairing_save_address(address)) {
+            ESP_LOGI(RF_TAG, "Remote paired successfully!");
+            pairing_exit_mode();
+            status_led_set(LED_STATUS_NORMAL);
+        } else {
+            ESP_LOGE(RF_TAG, "Failed to save pairing");
+        }
+        return;
+    }
+    
+    // Check if paired
+    if (!pairing_is_paired()) {
+        ESP_LOGW(RF_TAG, "No remote paired - ignoring");
+        return;
+    }
+    
+    // Verify address matches paired remote
+    if (strcmp(address, pairing_get_address()) != 0) {
+        ESP_LOGW(RF_TAG, "Unknown remote address: %s (expected: %s)", 
+                 address, pairing_get_address());
+        return;
+    }
+    
+    // Map data bits to relay numbers
+    // Expected: A=1000(8), B=0100(4), C=0010(2), D=0001(1)
+    int relay_num = -1;
+    const char *button_name = NULL;
+    
+    switch (data) {
+        case 0x8:  // 1000 - Button A
             relay_num = 0;
             button_name = "A";
-        }
-        #endif
-        
-        #ifdef RF_BUTTON_B
-        if (strcmp(sequence, RF_BUTTON_B) == 0) {
+            break;
+        case 0x4:  // 0100 - Button B
             relay_num = 1;
             button_name = "B";
-        }
-        #endif
-        
-        #ifdef RF_BUTTON_C
-        if (strcmp(sequence, RF_BUTTON_C) == 0) {
+            break;
+        case 0x2:  // 0010 - Button C
             relay_num = 2;
             button_name = "C";
-        }
-        #endif
-        
-        #ifdef RF_BUTTON_D
-        if (strcmp(sequence, RF_BUTTON_D) == 0) {
+            break;
+        case 0x1:  // 0001 - Button D
             relay_num = 3;
             button_name = "D";
-        }
-        #endif
-        
-        // Unknown button code
-        if (relay_num < 0) {
-            ESP_LOGD(RF_TAG, "Unknown button sequence: %s", sequence);
+            break;
+        default:
+            ESP_LOGW(RF_TAG, "Unknown button data: 0x%X", data);
             return;
-        }
-        
-        // Check if relay exists
-        if (relay_num >= NUM_RELAYS) {
-            ESP_LOGW(RF_TAG, "Button %s maps to relay %d, but only %d relays configured", 
-                     button_name, relay_num + 1, NUM_RELAYS);
-            return;
-        }
-        
-        // Hold detection: prevent rapid toggling when button is held
-        if (now - last_toggle_time[relay_num] < RF_HOLD_TIMEOUT_MS) {
-            ESP_LOGD(RF_TAG, "Button %s held - ignoring (last toggle %u ms ago)", 
-                     button_name, now - last_toggle_time[relay_num]);
-            return;
-        }
-        
-        // Toggle the relay
-        uint8_t current_state = relay_get(relay_num);
-        uint8_t new_state = !current_state;
-        relay_set(relay_num, new_state);
-        
-        // Update last toggle time
-        last_toggle_time[relay_num] = now;
-        
-        ESP_LOGI(RF_TAG, "Button %s pressed -> Relay %d toggled %s", 
-                 button_name, relay_num + 1, new_state ? "ON" : "OFF");
     }
+    
+    // Check if relay exists
+    if (relay_num >= NUM_RELAYS) {
+        ESP_LOGW(RF_TAG, "Button %s maps to relay %d, but only %d relays configured", 
+                 button_name, relay_num + 1, NUM_RELAYS);
+        return;
+    }
+    
+    // Hold detection: prevent rapid toggling when button is held
+    if (now - last_toggle_time[relay_num] < RF_HOLD_TIMEOUT_MS) {
+        ESP_LOGD(RF_TAG, "Button %s held - ignoring (last toggle %u ms ago)", 
+                 button_name, now - last_toggle_time[relay_num]);
+        return;
+    }
+    
+    // Toggle the relay
+    uint8_t current_state = relay_get(relay_num);
+    uint8_t new_state = !current_state;
+    relay_set(relay_num, new_state);
+    
+    // Update last toggle time
+    last_toggle_time[relay_num] = now;
+    
+    ESP_LOGI(RF_TAG, "Button %s pressed -> Relay %d toggled %s", 
+             button_name, relay_num + 1, new_state ? "ON" : "OFF");
 }
 
 /**
@@ -142,17 +196,12 @@ static void rf_code_received_callback(const char *code) {
 void rf_receiver_init(void) {
     ESP_LOGI(RF_TAG, "Initializing RF433 receiver with RFCodes library");
     ESP_LOGI(RF_TAG, "RFCodes version: %s", RFCODES_VERSION);
-    ESP_LOGI(RF_TAG, "Original author: %s", RFCODES_ORIGINAL_AUTHOR);
     
     // Initialize the signal parser
     signal_parser_init(&rf_parser);
     
-    // Load protocols you want to decode
-    // Uncomment/add protocols as needed:
-    signal_parser_load(&rf_parser, &protocol_ev1527, 0);  // EV1527 - common remote control chip
-    signal_parser_load(&rf_parser, &protocol_sc5, 0);     // SC5272 - another common chip
-    signal_parser_load(&rf_parser, &protocol_it1, 0);     // Intertechno old protocol
-    signal_parser_load(&rf_parser, &protocol_it2, 0);     // Intertechno new protocol
+    // Load EV1527 protocol only
+    signal_parser_load(&rf_parser, &protocol_ev1527, 0);
     
     // Attach callback for received codes
     signal_parser_attach_callback(&rf_parser, rf_code_received_callback);
@@ -161,6 +210,13 @@ void rf_receiver_init(void) {
     signal_collector_init(&rf_collector, &rf_parser, RF_RCV_PIN, RF_SEND_PIN, 0);
     
     ESP_LOGI(RF_TAG, "RF receiver initialized on GPIO %d", RF_RCV_PIN);
+    
+    // Check pairing status
+    if (pairing_is_paired()) {
+        ESP_LOGI(RF_TAG, "Remote paired: %s", pairing_get_address());
+    } else {
+        ESP_LOGW(RF_TAG, "No remote paired - touch pairing wires to pair");
+    }
 }
 
 /**
@@ -193,28 +249,6 @@ bool rf_send_code(const char *code) {
     ESP_LOGI(RF_TAG, "Sending: %s", code);
     signal_collector_send(&rf_collector, code);
     return true;
-}
-
-/**
- * @brief Get the number of buffered RF timings
- * @return Number of pending timings in buffer
- */
-uint32_t rf_get_buffer_count(void) {
-    return signal_collector_get_buffer_count(&rf_collector);
-}
-
-/**
- * @brief Helper to print binary representation of a value
- * @param value Value to print
- * @param bits Number of bits to print
- */
-void rf_print_binary(uint32_t value, int bits) {
-    for (int i = bits - 1; i >= 0; i--) {
-        putchar((value & (1 << i)) ? '1' : '0');
-        if (i > 0 && i % 4 == 0) {
-            putchar(' ');
-        }
-    }
 }
 
 #endif // RF_H
