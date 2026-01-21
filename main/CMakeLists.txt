@@ -1,7 +1,8 @@
 idf_component_register(
     SRCS "main.c" "wifi.c" "mdns.c"
-    INCLUDE_DIRS "."
-    # REQUIRES nvs_flash mdns lwip
+      "rfcodes/signal_parser.c"
+      "rfcodes/signal_collector.c"
+    INCLUDE_DIRS "." "rfcodes"
 )
 
 # Force C linking
