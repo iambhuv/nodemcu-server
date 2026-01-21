@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "main.c" "wifi.c" "mdns.c"
+    SRCS "main.c" "mdns.c"
       "rfcodes/signal_parser.c"
       "rfcodes/signal_collector.c"
     INCLUDE_DIRS "." "rfcodes"

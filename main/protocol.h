@@ -19,11 +19,19 @@ typedef enum {
   CMD_SET_RELAY = 0x03,    // Set specific relay state
   CMD_TOGGLE_RELAY = 0x04, // Toggle specific relay
   CMD_SET_ALL = 0x05,      // Set all relays at once (bitmask)
-  CMD_DESCRIBE = 0x10      // Get all information about device
+  CMD_DESCRIBE = 0x10,     // Get all information about device
+
+  // Configuration commands (v2)
+  CMD_GET_RELAY_CONFIG = 0x20,  // Get config for specific relay (id in relay_id)
+  CMD_SET_RELAY_NAME = 0x21,    // Set relay name (name follows header)
+  CMD_SET_RELAY_ROOM = 0x22,    // Set relay room (room follows header)
+  CMD_SET_RELAY_ICON = 0x23,    // Set relay icon (icon type in value)
+  CMD_SET_RELAY_ALEXA = 0x24,   // Enable/disable Alexa for relay
+  CMD_GET_ALL_CONFIG = 0x25,    // Get all relay configurations
 } cmd_type_t;
 
 // Response types
-typedef enum { RESP_OK = 0x00, RESP_ERROR = 0x01, RESP_STATUS = 0x02, RESP_PONG = 0x03, RESP_DESCRIBE = 0x04 } resp_type_t;
+typedef enum { RESP_OK = 0x00, RESP_ERROR = 0x01, RESP_STATUS = 0x02, RESP_PONG = 0x03, RESP_DESCRIBE = 0x04, RESP_CONFIG = 0x05 } resp_type_t;
 
 // A5 04 1B 01 06 73 77 69 74 63 68 02 04 53 52 2D 34 03 01 A5 A5 A5 A5 A5 A5 A5
 // A5 A5 A5 A5
@@ -36,6 +44,25 @@ typedef enum {
   DESC_CAPABILITIES = 0x04, // bitmask
   DESC_FW_VERSION = 0x05,   // "1.2.0"
 } desc_type_t;
+
+// Relay configuration description (for CMD_GET_RELAY_CONFIG response)
+typedef enum {
+  CFG_RELAY_ID = 0x01,     // u8 relay index
+  CFG_RELAY_NAME = 0x02,   // string
+  CFG_RELAY_ROOM = 0x03,   // string
+  CFG_RELAY_ICON = 0x04,   // u8 icon type
+  CFG_RELAY_ALEXA = 0x05,  // u8 (0=disabled, 1=enabled)
+  CFG_RELAY_STATE = 0x06,  // u8 current state (0=off, 1=on)
+} cfg_type_t;
+
+// Error codes
+typedef enum {
+  ERR_INVALID_RELAY = 0x01,
+  ERR_UNKNOWN_CMD = 0x02,
+  ERR_INVALID_VALUE = 0x03,
+  ERR_NAME_TOO_LONG = 0x04,
+  ERR_INVALID_MAGIC = 0xFF,
+} error_code_t;
 
 // Request packet structure
 // [MAGIC:1][CMD:1][RELAY_ID:1][VALUE:1]

@@ -9,6 +9,9 @@
 #include "pairing.h"
 #include "status_led.h"
 #include "mdns.c"
+#include "relay_config.h"
+#include "http_server.h"
+#include "alexa.h"
 
 // Pairing button monitoring task
 void pairing_button_task(void *pvParameters) {
@@ -57,7 +60,8 @@ void pairing_button_task(void *pvParameters) {
 void led_task(void *pvParameters) {
     while (1) {
         status_led_update();
-        relays_check_save();  // Periodically save relay states if dirty
+        relays_check_save();         // Periodically save relay states if dirty
+        relay_config_check_save();   // Periodically save relay config if dirty
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
@@ -71,7 +75,10 @@ void app_main(void) {
     
     // Initialize NVS and pairing
     pairing_init();
-    
+
+    // Load relay configuration (names, rooms, etc.)
+    relay_config_load();
+
     // Initialize relays (will restore saved states)
     relays_init();
     
@@ -96,11 +103,18 @@ void app_main(void) {
     }
     
     // Start tasks
-    xTaskCreate(relay_server_task, "http_server", 4096, NULL, 5, NULL);
+    xTaskCreate(relay_server_task, "binary_server", 4096, NULL, 5, NULL);
+    xTaskCreate(http_server_task, "http_server", 4096, NULL, 5, NULL);
     xTaskCreate(mdns_task, "mdns_task", 2048, NULL, 5, NULL);
     xTaskCreate(rf_decode_task, "rf_task", 2048, NULL, 6, NULL);
     xTaskCreate(pairing_button_task, "pairing_task", 2048, NULL, 4, NULL);
     xTaskCreate(led_task, "led_task", 1024, NULL, 3, NULL);
-    
+
+    // Initialize Alexa support (starts its own tasks)
+    alexa_init();
+
     ESP_LOGI(TAG, "All tasks started");
+    ESP_LOGI(TAG, "Web interface: http://%s.local/", MDNS_HOSTNAME);
+    ESP_LOGI(TAG, "Binary protocol: port %d", RELAY_PORT);
+    ESP_LOGI(TAG, "Alexa: say 'Alexa, discover devices'");
 }

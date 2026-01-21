@@ -4,18 +4,19 @@
 #include "mdns.h"
 #include <stdint.h>
 
-static const char* TAG = "switch-1";
+static const char* TAG = "switch-2";
 
-#define MDNS_HOSTNAME "switch-1"
-#define MDNS_INSTANCE "switch_1"
+#define MDNS_HOSTNAME "switch-2"
+#define MDNS_INSTANCE "switch_2"
 #define MDNS_SERVICE "_homeiot"
 #define MDNS_PROTO "_tcp"
 
 static const mdns_txt_item_t mdns_txt[] = {
     {"type", "switch"},
     {"relays", "4"},
-    {"proto", "v1"},
-    {"fw", "1.0.0"},
+    {"proto", "v2"},
+    {"fw", "1.1.0"},
+    {"alexa", "yes"},
 };
 
 /**

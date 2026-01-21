@@ -30,11 +30,17 @@ void mdns_init_service(void) {
     return;
   }
 
-  // Add HTTP service
+  // Add homeiot service (binary protocol)
   err = mdns_service_add(MDNS_INSTANCE, MDNS_SERVICE, MDNS_PROTO, RELAY_PORT, mdns_txt, sizeof(mdns_txt) / sizeof(mdns_txt[0]));
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "Failed to add service: %d", err);
     return;
+  }
+
+  // Add HTTP service for web interface
+  err = mdns_service_add(MDNS_INSTANCE, "_http", "_tcp", 80, NULL, 0);
+  if (err != ESP_OK) {
+    ESP_LOGW(TAG, "Failed to add HTTP service: %d", err);
   }
 
   ESP_LOGI(TAG, "mDNS started: %s.local", MDNS_HOSTNAME);

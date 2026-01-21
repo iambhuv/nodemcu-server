@@ -1,3 +1,6 @@
+#ifndef WIFI_H
+#define WIFI_H
+
 #include "config.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -48,3 +51,5 @@ void wifi_init_sta(void) {
 
   ESP_LOGI(TAG, "WiFi init finished, connecting to %s", WIFI_SSID);
 }
+
+#endif // WIFI_H
