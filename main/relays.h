@@ -9,6 +9,11 @@
 // Current relay states
 static uint8_t relay_states[NUM_RELAYS] = {0};
 
+// Delayed save mechanism to avoid excessive NVS writes
+static bool relay_states_dirty = false;
+static uint32_t last_relay_change_time = 0;
+#define RELAY_SAVE_DELAY_MS 5000  // Save 5 seconds after last change
+
 void relays_init(void) {
   gpio_config_t io_conf = {
       .pin_bit_mask = 0,
@@ -55,8 +60,9 @@ void relay_set(uint8_t relay_num, uint8_t state) {
   gpio_set_level(pin, state);
   relay_states[relay_num] = state;
 
-  // Save state to NVS
-  pairing_save_relay_states(relay_states, NUM_RELAYS);
+  // Mark as dirty and update timestamp - actual save happens later
+  relay_states_dirty = true;
+  last_relay_change_time = esp_timer_get_time() / 1000;
 
   ESP_LOGI(TAG, "Relay %d (GPIO %d) -> %s", relay_num + 1, pin, state ? "ON" : "OFF");
 }
@@ -67,6 +73,18 @@ uint8_t relay_get(uint8_t relay_num) {
     return 0;
   }
   return relay_states[relay_num];
+}
+
+// Check if relay states need to be saved (call from main loop)
+void relays_check_save(void) {
+  if (relay_states_dirty) {
+    uint32_t now = esp_timer_get_time() / 1000;
+    if (now - last_relay_change_time >= RELAY_SAVE_DELAY_MS) {
+      ESP_LOGD(TAG, "Saving relay states to NVS");
+      pairing_save_relay_states(relay_states, NUM_RELAYS);
+      relay_states_dirty = false;
+    }
+  }
 }
 
 #endif /* RELAYS_H */

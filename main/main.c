@@ -53,11 +53,12 @@ void pairing_button_task(void *pvParameters) {
     }
 }
 
-// LED update task
+// LED update and housekeeping task
 void led_task(void *pvParameters) {
     while (1) {
         status_led_update();
-        vTaskDelay(pdMS_TO_TICKS(10));
+        relays_check_save();  // Periodically save relay states if dirty
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
