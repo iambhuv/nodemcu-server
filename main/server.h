@@ -1,8 +1,11 @@
+#ifndef SERVER_H
+#define SERVER_H
+
 #include "config.h"
 #include "lwip/sockets.h"
 #include "protocol.h"
-#include "relays.h"
 #include "wifi.c"
+#include "relays.h"
 
 void relay_server_task(void* pvParameters) {
   struct sockaddr_in server_addr, client_addr;
@@ -165,3 +168,5 @@ void relay_server_task(void* pvParameters) {
     close(client_sock);
   }
 }
+
+#endif // SERVER_H

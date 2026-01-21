@@ -4,11 +4,6 @@
 #include "event_groups.h"
 #include "freertos/task.h"
 
-#define MDNS_HOSTNAME "switch-1"
-#define MDNS_INSTANCE "switch_1"
-#define MDNS_SERVICE "_homeiot"
-#define MDNS_PROTO "_tcp"
-
 extern EventGroupHandle_t s_wifi_event_group;
 
 void mdns_init_service(void) {
@@ -36,10 +31,7 @@ void mdns_init_service(void) {
   }
 
   // Add HTTP service
-  err = mdns_service_add(MDNS_INSTANCE, // "switch_1"
-                         MDNS_SERVICE,  // "_homeiot"
-                         MDNS_PROTO,    // "_tcp"
-                         RELAY_PORT, mdns_txt, sizeof(mdns_txt) / sizeof(mdns_txt[0]));
+  err = mdns_service_add(MDNS_INSTANCE, MDNS_SERVICE, MDNS_PROTO, RELAY_PORT, mdns_txt, sizeof(mdns_txt) / sizeof(mdns_txt[0]));
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "Failed to add service: %d", err);
     return;

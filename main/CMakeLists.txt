@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "main.c" "wifi.c" "mdns.c" "server.c"
+    SRCS "main.c" "wifi.c" "mdns.c"
     INCLUDE_DIRS "."
     # REQUIRES nvs_flash mdns lwip
 )

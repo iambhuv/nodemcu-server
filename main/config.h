@@ -6,6 +6,11 @@
 
 static const char* TAG = "switch-1";
 
+#define MDNS_HOSTNAME "switch-1"
+#define MDNS_INSTANCE "switch_1"
+#define MDNS_SERVICE "_homeiot"
+#define MDNS_PROTO "_tcp"
+
 static const mdns_txt_item_t mdns_txt[] = {
     {"type", "switch"},
     {"relays", "4"},

@@ -2,6 +2,7 @@
 #define RELAY_PROTOCOL_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 // Protocol: Simple binary packets

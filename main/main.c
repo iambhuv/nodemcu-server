@@ -1,10 +1,11 @@
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "mdns.c"
 #include "nvs_flash.h"
+#include "rf.h"
+#include "server.h"
 #include "relays.h"
-#include "server.c"
-#include <stdio.h>
+#include "mdns.c"
 
 void app_main(void) {
   ESP_LOGI(TAG, "Starting relay controller");
@@ -12,6 +13,7 @@ void app_main(void) {
   esp_err_t ret = nvs_flash_init();
 
   relays_init();
+  rf_receiver_init();
 
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
     ESP_ERROR_CHECK(nvs_flash_erase());
@@ -27,4 +29,6 @@ void app_main(void) {
   // Start web server task
   xTaskCreate(relay_server_task, "http_server", 4096, NULL, 5, NULL);
   xTaskCreate(mdns_task, "mdns_task", 2048, NULL, 5, NULL);
+
+  xTaskCreate(rf_decode_task, "rf_task", 2048, NULL, 6, NULL);
 }
